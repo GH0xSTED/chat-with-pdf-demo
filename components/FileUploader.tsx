@@ -67,7 +67,7 @@ function FileUploader() {
       {uploadInProgress && (
         <div className="mt-32 flex flex-col justify-center items-center gap-5">
           <div
-            className={`radial-progress bg-indigo-300 text-white border-idigo-600 border-4 ${
+            className={`radial-progress bg-indigo-300 text-white border-indigo-600 border-4 ${
               progress === 100 && "hidden"
             }`}
             role="progressbar"
@@ -88,7 +88,7 @@ function FileUploader() {
           }
 
           {/* @ts-ignore */}
-          <p>{status}</p>
+          <p className="text-indigo-600 animate-pulse">{status}</p>
         </div>
       )}
       {!uploadInProgress && (
