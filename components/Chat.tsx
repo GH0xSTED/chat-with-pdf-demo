@@ -10,14 +10,14 @@ import {
 } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-//import { askQuestion, Message } from "@/actions/askQuestion";
 import { Loader2Icon } from "lucide-react";
-//import ChatMessage from "./ChatMessage";
+import ChatMessage from "./ChatMessage";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { collection, orderBy, query } from "firebase/firestore";
 import { db } from "@/firebase";
 import React from "react";
 import { useUser } from "@clerk/nextjs";
+import { askQuestion } from "@/actions/askQuestion";
 
 export type Message = {
   id?: string;
@@ -32,6 +32,7 @@ function Chat({ id }: { id: string }) {
   const [input, setInput] = useState("");
   const [isPending, setIsPending] = useTransition();
   const [messages, setMessages] = useState<Message[]>([]);
+  const bottomOfChatRef = useRef<HTMLDivElement>(null);
 
   const [snapshot, loading, error] = useCollection(
     user &&
@@ -42,9 +43,34 @@ function Chat({ id }: { id: string }) {
   );
 
   useEffect(() => {
+    bottomOfChatRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [messages]);
+
+  useEffect(() => {
     if (!snapshot) return;
 
     console.log("Updated snapshot", snapshot.docs);
+
+    const lastMessage = messages.pop();
+
+    if (lastMessage?.role === "ai" && lastMessage.message === "Thinking...") {
+      return;
+    }
+
+    const newMessages = snapshot.docs.map((doc) => {
+      const { role, message, createdAt } = doc.data();
+
+      return {
+        id: doc.id,
+        role,
+        message,
+        createdAt: createdAt.toDate(),
+      };
+    });
+
+    setMessages(newMessages);
   }, [snapshot]);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -67,11 +93,52 @@ function Chat({ id }: { id: string }) {
         createdAt: new Date(),
       },
     ]);
+
+    startTransition(async () => {
+      const { success, message } = await askQuestion(id, q);
+
+      if (!success) {
+        //toast
+
+        setMessages((prev) =>
+          prev.slice(0, prev.length - 1).concat([
+            {
+              role: "ai",
+              message: `Whoops... ${message}`,
+              createdAt: new Date(),
+            },
+          ])
+        );
+      }
+    });
   };
 
   return (
     <div className="flex flex-col h-full overflow-scroll">
-      <div className="flex-1 w-full">Contents</div>
+      <div className="flex-1 w-full">
+        {loading ? (
+          <div className="flex items-center justify-center">
+            <Loader2Icon className="animate-spin h-20 w-20 text-indigo-600 mt-20" />
+          </div>
+        ) : (
+          <div className="p-5">
+            {messages.length === 0 && (
+              <ChatMessage
+                key={"placeholder"}
+                message={{
+                  role: "ai",
+                  message: "Ask me anything about the document!",
+                  createdAt: new Date(),
+                }}
+              />
+            )}
+
+            {messages.map((message, index) => (
+              <ChatMessage key={index} message={message} />
+            ))}
+          </div>
+        )}
+      </div>
 
       <form
         onSubmit={handleSubmit}
