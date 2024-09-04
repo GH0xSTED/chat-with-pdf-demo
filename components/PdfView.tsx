@@ -53,7 +53,7 @@ function PdfView({ url }: { url: string }) {
               }
             }}
           >
-            Previous
+            Prev
           </Button>
           <p className="flex items-center justify-center">
             {pageNumber} of {numPages}
