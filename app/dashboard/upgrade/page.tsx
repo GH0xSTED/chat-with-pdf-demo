@@ -1,7 +1,9 @@
 "use client";
 
+import { createCheckoutSession } from "@/actions/createCheckoutSession";
 import { Button } from "@/components/ui/button";
 import useSubscription from "@/hooks/useSubscription";
+import getStripe from "@/lib/stripe-js";
 import { useUser } from "@clerk/nextjs";
 import { CheckIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -27,7 +29,17 @@ function PricingPage() {
     };
 
     startTransition(async () => {
-      //Load Stripe
+      const stripe = await getStripe();
+
+      if (hasActiveMembership) {
+        //create stripe portal...
+      }
+
+      const sessionId = await createCheckoutSession(userDetails);
+
+      await stripe?.redirectToCheckout({
+        sessionId,
+      });
     });
   };
 
