@@ -52,7 +52,7 @@ function FileUploader() {
         // toast...
       }
     },
-    [handleUpload]
+    [handleUpload, filesLoading, isOverFileLimit, toast]
   );
 
   const statusIcons: {
