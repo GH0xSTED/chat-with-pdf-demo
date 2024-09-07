@@ -18,6 +18,9 @@ import { db } from "@/firebase";
 import React from "react";
 import { useUser } from "@clerk/nextjs";
 import { askQuestion } from "@/actions/askQuestion";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "./ui/toast";
+import Link from "next/link";
 
 export type Message = {
   id?: string;
@@ -33,6 +36,8 @@ function Chat({ id }: { id: string }) {
   const [isPending, setIsPending] = useTransition();
   const [messages, setMessages] = useState<Message[]>([]);
   const bottomOfChatRef = useRef<HTMLDivElement>(null);
+
+  const { toast } = useToast();
 
   const [snapshot, loading, error] = useCollection(
     user &&
@@ -98,7 +103,16 @@ function Chat({ id }: { id: string }) {
       const { success, message } = await askQuestion(id, q);
 
       if (!success) {
-        //toast
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: message,
+          action: (
+            <ToastAction altText="Upgrade">
+              <Link href="/dashboard/upgrade">Upgrade</Link>
+            </ToastAction>
+          ),
+        });
 
         setMessages((prev) =>
           prev.slice(0, prev.length - 1).concat([
