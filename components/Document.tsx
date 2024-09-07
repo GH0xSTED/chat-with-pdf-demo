@@ -8,6 +8,8 @@ import { DownloadCloud, Trash2Icon } from "lucide-react";
 import { Button } from "./ui/button";
 import Link from "next/link";
 import { deleteDocument } from "@/actions/deleteDocument";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "./ui/toast";
 
 function Document({
   id,
@@ -23,6 +25,8 @@ function Document({
   const router = useRouter();
   const [isDeleting, startTransaction] = useTransition();
   const { hasActiveMembership } = useSubscription();
+
+  const { toast } = useToast();
 
   return (
     <div className="flex flex-col w-64 h-80 rounded-xl bg-white drop-shadow-md justify-between p-4 transition-all transform hover:scale-105 hover:bg-indigo-600 hover:text-white cursor-pointer group">
@@ -44,15 +48,26 @@ function Document({
           variant="outline"
           disabled={isDeleting || !hasActiveMembership}
           onClick={() => {
-            const prompt = window.confirm(
-              "Are you sure yo uwant to delete this document?"
-            );
-            if (prompt) {
-              //delete doc
-              startTransaction(async () => {
-                await deleteDocument(id);
-              });
-            }
+            toast({
+              variant: "destructive",
+              title: "Confirm Document Deletion",
+              description: "Are you sure you want to delete this document?",
+              action: (
+                <div className="flex flex-row space-x-2">
+                  <ToastAction altText="Cancel">Cancel</ToastAction>
+                  <ToastAction
+                    altText="DELETE"
+                    onClick={() => {
+                      startTransaction(async () => {
+                        await deleteDocument(id);
+                      });
+                    }}
+                  >
+                    DELETE
+                  </ToastAction>
+                </div>
+              ),
+            });
           }}
         >
           <Trash2Icon className="h-6 w-6 text-red-500" />
